@@ -1,0 +1,73 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Profile - Vortex{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Edit Profile</h2>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.profile_image.label_tag }}
+                        {{ form.profile_image }}
+                        {% if form.profile_image.errors %}
+                            <div class="text-danger">{{ form.profile_image.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Enter a URL for your profile image</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.bio.label_tag }}
+                        {{ form.bio }}
+                        {% if form.bio.errors %}
+                            <div class="text-danger">{{ form.bio.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Account Information</h5>
+                <p><strong>User ID:</strong> {{ user.id }}</p>
+                <p><strong>Role:</strong> {{ user.get_role_display }}</p>
+                <p><strong>Member Since:</strong> {{ user.created_at|date:"F d, Y" }}</p>
+                <p><strong>Last Updated:</strong> {{ user.updated_at|date:"F d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

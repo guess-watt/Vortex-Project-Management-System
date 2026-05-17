@@ -1,0 +1,205 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ project.name }} - Vortex{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ project.name }}</h2>
+    <div>
+        <a href="{% url 'ai:generate_tasks' project.pk %}" class="btn btn-success">
+            <i class="bi bi-magic"></i> Generate Tasks with AI
+        </a>
+        <a href="{% url 'projects:project_kanban' project.pk %}" class="btn btn-info">
+            <i class="bi bi-kanban"></i> Kanban Board
+        </a>
+        <a href="{% url 'projects:project_burndown' project.pk %}" class="btn btn-primary">
+            <i class="bi bi-graph-down"></i> Burndown Chart
+        </a>
+        <a href="{% url 'projects:project_team' project.pk %}" class="btn btn-warning">
+            <i class="bi bi-people"></i> Team
+        </a>
+        {% if user == project.owner %}
+            <a href="{% url 'projects:project_edit' project.pk %}" class="btn btn-outline-warning">Edit</a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
+        {% endif %}
+        <a href="{% url 'projects:project_list' %}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Description</h5>
+        <p class="card-text">{{ project.description }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Project Owner</h5>
+                <p class="card-text">
+                    <strong>{{ project.owner.username }}</strong><br>
+                    {{ project.owner.email }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Team Members ({{ project.members.count }})</h5>
+                    <a href="{% url 'projects:project_team' project.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-people"></i> Manage Team
+                    </a>
+                </div>
+                {% if project.members.all %}
+                    <ul class="list-unstyled mb-0">
+                        {% for member in project.members.all|slice:":5" %}
+                        <li class="mb-2">
+                            <i class="bi bi-person-circle text-primary"></i>
+                            <strong>{{ member.username }}</strong>
+                            <small class="text-muted">({{ member.email }})</small>
+                        </li>
+                        {% endfor %}
+                        {% if project.members.count > 5 %}
+                        <li class="text-muted">
+                            <small>+ {{ project.members.count|add:"-5" }} more member{{ project.members.count|add:"-5"|pluralize }}</small>
+                        </li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No team members yet</p>
+                    <a href="{% url 'projects:project_team' project.pk %}" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="bi bi-person-plus"></i> Invite Members
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Tasks ({{ project.tasks.count }})</h5>
+        <a href="{% url 'tasks:task_create' project.pk %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> Add Task
+        </a>
+    </div>
+    <div class="card-body">
+        {% if project.tasks.all %}
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Done</th>
+                            <th>Title</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in project.tasks.all %}
+                        <tr class="task-card">
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input task-status-checkbox"
+                                           type="checkbox"
+                                           data-task-id="{{ task.id }}"
+                                           {% if task.status == 'done' or task.status == 'completed' %}checked{% endif %}
+                                           id="task-{{ task.id }}">
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ task.title }}</strong>
+                                {% if task.description %}
+                                    <br><small class="text-muted">{{ task.description|truncatewords:15 }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.assigned_to %}
+                                    {{ task.assigned_to.username }}
+                                {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if task.status == 'done' or task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'pending' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ task.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'tasks:task_edit' task.pk %}"
+                                       class="btn btn-outline-primary"
+                                       title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'tasks:task_delete' task.pk %}"
+                                       class="btn btn-outline-danger"
+                                       title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted mb-3">No tasks yet. Create your first task to get started!</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{% url 'ai:generate_tasks' project.pk %}" class="btn btn-success">
+                        <i class="bi bi-magic"></i> Generate with AI
+                    </a>
+                    <a href="{% url 'tasks:task_create' project.pk %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Manually
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Project Information</h5>
+        <p class="mb-1"><strong>Created:</strong> {{ project.created_at|date:"F d, Y H:i" }}</p>
+        <p class="mb-0"><strong>Last Updated:</strong> {{ project.updated_at|date:"F d, Y H:i" }}</p>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this project? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'projects:project_delete' project.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

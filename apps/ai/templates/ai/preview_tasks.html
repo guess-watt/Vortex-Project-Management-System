@@ -1,0 +1,173 @@
+{% extends 'accounts/base.html' %}
+{% load ai_filters %}
+
+{% block title %}Preview Generated Tasks - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-eye"></i> Preview Generated Tasks</h2>
+            <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Project
+            </a>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Project: {{ project.name }}</h5>
+                <p class="text-muted mb-0">Review the AI-generated tasks below. You can save all tasks or regenerate with different parameters.</p>
+            </div>
+        </div>
+
+        {% if generated_tasks %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i>
+            <strong>Success!</strong> Generated {{ generated_tasks|length }} task{{ generated_tasks|length|pluralize }} for your project.
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-task"></i> Generated Tasks ({{ generated_tasks|length }})</h5>
+                <span class="badge bg-light text-dark">Ready to Save</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for task in generated_tasks %}
+                    <div class="list-group-item" id="task-{{ forloop.counter0 }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-secondary me-2">Task {{ forloop.counter }}</span>
+                                    <h6 class="mb-0">{{ task.title }}</h6>
+                                </div>
+                                <p class="mb-2 text-muted">{{ task.description }}</p>
+                                <div>
+                                    <span class="badge
+                                        {% if task.status == 'completed' %}bg-success
+                                        {% elif task.status == 'pending' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        Status: {{ task.status|title|replace:"_, " }}
+                                    </span>
+                                </div>
+                            </div>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger ms-3" 
+                                    onclick="removeTask({{ forloop.counter0 }})"
+                                    title="Remove this task">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="bi bi-question-circle"></i> What would you like to do?</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <form method="post" class="h-100">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="save_all">
+                            <div class="card h-100 border-success">
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-success">
+                                        <i class="bi bi-check-circle"></i> Save All Tasks
+                                    </h6>
+                                    <p class="card-text flex-grow-1">
+                                        Save all {{ generated_tasks|length }} task{{ generated_tasks|length|pluralize }} to your project. 
+                                        They will appear in your project dashboard and Kanban board.
+                                    </p>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="bi bi-save"></i> Save All Tasks
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="post" class="h-100">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="regenerate">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-warning">
+                                        <i class="bi bi-arrow-clockwise"></i> Regenerate Tasks
+                                    </h6>
+                                    <p class="card-text flex-grow-1">
+                                        Not satisfied with these tasks? Go back and generate a new set with different parameters or description.
+                                    </p>
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="bi bi-arrow-clockwise"></i> Regenerate
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>No tasks found.</strong> Please generate tasks first.
+        </div>
+        <a href="{% url 'ai:generate_tasks' project.pk %}" class="btn btn-primary">
+            <i class="bi bi-magic"></i> Generate Tasks
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function removeTask(taskIndex) {
+    if (!confirm('Are you sure you want to remove this task from the preview?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('task_index', taskIndex);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('{% url "ai:remove_task_ajax" project.pk %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the task element from DOM
+            const taskElement = document.getElementById('task-' + taskIndex);
+            if (taskElement) {
+                taskElement.remove();
+            }
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.col-lg-10').insertBefore(alertDiv, document.querySelector('.col-lg-10').firstChild);
+            
+            // Reload if no tasks remaining
+            if (data.remaining_count === 0) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        } else {
+            window.ToastManager.error('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        window.ToastManager.error('Failed to remove task. Please try again.');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,130 @@
+/* Project Health Score Styles */
+
+.project-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.health-score-container {
+    cursor: help;
+    position: relative;
+}
+
+.health-circle {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Animated progress circle */
+.health-progress {
+    transition: stroke-dashoffset 1.5s ease-out;
+    transform-origin: center;
+}
+
+/* Dashboard hover effect */
+.hover-shadow {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Project stats styling */
+.project-stats small {
+    line-height: 1.8;
+}
+
+.project-stats i {
+    width: 16px;
+    display: inline-block;
+}
+
+/* Sort button group styling */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Health badge styling */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Tooltip custom styling */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .health-circle {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .health-circle text:first-of-type {
+        font-size: 14px;
+    }
+    
+    .health-circle text:last-of-type {
+        font-size: 8px;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .project-card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .project-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .health-circle circle:first-child {
+        stroke: #4a5568;
+    }
+}
+
+/* Animation for card entrance */
+.project-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger animation for multiple cards */
+.project-card:nth-child(1) { animation-delay: 0.1s; }
+.project-card:nth-child(2) { animation-delay: 0.2s; }
+.project-card:nth-child(3) { animation-delay: 0.3s; }
+.project-card:nth-child(4) { animation-delay: 0.4s; }
+.project-card:nth-child(5) { animation-delay: 0.5s; }
+.project-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Made with Bob */

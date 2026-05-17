@@ -1,0 +1,85 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ action }} Project - Vortex{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>{{ action }} Project</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Project Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.members.id_for_label }}" class="form-label">Members</label>
+                        {{ form.members }}
+                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple members</small>
+                        {% if form.members.errors %}
+                            <div class="text-danger">{{ form.members.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if action == 'Create' %}
+                    <hr class="my-4">
+                    
+                    <div class="mb-3">
+                        <h5 class="mb-3">Add Tasks (Optional)</h5>
+                        <p class="text-muted small">You can add initial tasks to your project. Leave blank to skip.</p>
+                        
+                        {{ task_formset.management_form }}
+                        
+                        <div id="task-forms">
+                            {% for task_form in task_formset %}
+                            <div class="task-form-container border rounded p-3 mb-3" style="background-color: #f8f9fa;">
+                                <h6 class="mb-3">Task {{ forloop.counter }}</h6>
+                                
+                                <div class="mb-2">
+                                    <label for="{{ task_form.title.id_for_label }}" class="form-label">Task Title</label>
+                                    {{ task_form.title }}
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <label for="{{ task_form.description.id_for_label }}" class="form-label">Description</label>
+                                    {{ task_form.description }}
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <label for="{{ task_form.assigned_to.id_for_label }}" class="form-label">Assign To</label>
+                                    {{ task_form.assigned_to }}
+                                    <small class="form-text text-muted">Select a member from the list above first</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% if project %}{% url 'projects:project_detail' project.pk %}{% else %}{% url 'projects:project_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">{{ action }} Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

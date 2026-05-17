@@ -1,0 +1,243 @@
+/**
+ * Toast Notification System Styles
+ * Modern, animated toast notifications with mobile responsiveness
+ */
+
+/* Toast Container */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+/* Toast Base Styles */
+.toast {
+    min-width: 320px;
+    max-width: 420px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Toast Show Animation */
+.toast.toast-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Toast Hide Animation */
+.toast.toast-hide {
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease-in;
+}
+
+/* Toast Icon */
+.toast-icon {
+    font-size: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* Toast Content */
+.toast-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast-message {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* Toast Action Button */
+.toast-action-btn {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+}
+
+.toast-action-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Toast Close Button */
+.toast-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+/* Toast Progress Bar */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.3;
+    transform-origin: left;
+}
+
+/* Progress Bar Animation */
+@keyframes toast-progress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Toast Type Styles */
+.toast-success {
+    border-left: 4px solid #10b981;
+    color: #10b981;
+}
+
+.toast-success .toast-progress {
+    background: #10b981;
+}
+
+.toast-error {
+    border-left: 4px solid #ef4444;
+    color: #ef4444;
+}
+
+.toast-error .toast-progress {
+    background: #ef4444;
+}
+
+.toast-warning {
+    border-left: 4px solid #f59e0b;
+    color: #f59e0b;
+}
+
+.toast-warning .toast-progress {
+    background: #f59e0b;
+}
+
+.toast-info {
+    border-left: 4px solid #3b82f6;
+    color: #3b82f6;
+}
+
+.toast-info .toast-progress {
+    background: #3b82f6;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 576px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+
+    .toast {
+        min-width: 100%;
+        max-width: 100%;
+        transform: translateY(-100px);
+    }
+
+    .toast.toast-show {
+        transform: translateY(0);
+    }
+
+    .toast.toast-hide {
+        transform: translateY(-100px);
+    }
+}
+
+/* Tablet Responsive Styles */
+@media (min-width: 577px) and (max-width: 768px) {
+    .toast-container {
+        right: 15px;
+    }
+
+    .toast {
+        min-width: 280px;
+        max-width: 360px;
+    }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    .toast {
+        background: #1f2937;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .toast-message {
+        color: #e5e7eb;
+    }
+
+    .toast-close {
+        color: #9ca3af;
+    }
+
+    .toast-close:hover {
+        color: #e5e7eb;
+    }
+
+    .toast-action-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Accessibility */
+.toast:focus-within {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* Animation for stacking toasts */
+.toast-container > .toast:not(:last-child) {
+    margin-bottom: 0;
+}
+
+/* Smooth height transitions when toasts are added/removed */
+.toast-container {
+    transition: height 0.3s ease;
+}
+
+/* Made with Bob */

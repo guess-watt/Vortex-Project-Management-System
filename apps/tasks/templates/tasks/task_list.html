@@ -1,0 +1,193 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}My Tasks - Vortex{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Tasks</h2>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<!-- Task Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3>{{ all_count }}</h3>
+                <p class="mb-0">Total Tasks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary">{{ not_started_count }}</h3>
+                <p class="mb-0">Not Started</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ pending_count }}</h3>
+                <p class="mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ completed_count }}</h3>
+                <p class="mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Buttons -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="btn-group" role="group">
+            <a href="{% url 'tasks:task_list' %}" 
+               class="btn btn-{% if status_filter == 'all' %}primary{% else %}outline-primary{% endif %}">
+                All ({{ all_count }})
+            </a>
+            <a href="{% url 'tasks:task_list' %}?status=not_started" 
+               class="btn btn-{% if status_filter == 'not_started' %}secondary{% else %}outline-secondary{% endif %}">
+                Not Started ({{ not_started_count }})
+            </a>
+            <a href="{% url 'tasks:task_list' %}?status=pending" 
+               class="btn btn-{% if status_filter == 'pending' %}warning{% else %}outline-warning{% endif %}">
+                Pending ({{ pending_count }})
+            </a>
+            <a href="{% url 'tasks:task_list' %}?status=completed" 
+               class="btn btn-{% if status_filter == 'completed' %}success{% else %}outline-success{% endif %}">
+                Completed ({{ completed_count }})
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            {% if status_filter == 'all' %}All Tasks
+            {% elif status_filter == 'pending' %}Pending Tasks
+            {% elif status_filter == 'not_started' %}Not Started Tasks
+            {% elif status_filter == 'completed' %}Completed Tasks
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Done</th>
+                            <th>Title</th>
+                            <th>Project</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr class="task-card {% if task.status == 'overdue' %}border-start border-danger border-3{% elif task.due_date %}{% now 'Y-m-d' as today %}{% if task.due_date|date:'Y-m-d' == today %}border-start border-warning border-3{% endif %}{% endif %}">
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input task-status-checkbox"
+                                           type="checkbox"
+                                           data-task-id="{{ task.id }}"
+                                           {% if task.status == 'done' or task.status == 'completed' %}checked{% endif %}
+                                           id="task-{{ task.id }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>{{ task.title }}</strong>
+                                    {% if task.status == 'overdue' %}
+                                        <span class="badge bg-danger">OVERDUE</span>
+                                    {% elif task.due_date %}
+                                        {% now "Y-m-d" as today %}
+                                        {% if task.due_date|date:"Y-m-d" == today %}
+                                            <span class="badge bg-warning text-dark">DUE TODAY</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% if task.description %}
+                                    <br><small class="text-muted">{{ task.description|truncatewords:15 }}</small>
+                                {% endif %}
+                                {% if task.due_date %}
+                                    <br>
+                                    {% if task.status == 'overdue' %}
+                                        <small class="text-danger" style="text-decoration: line-through;">Due: {{ task.due_date|date:"M d, Y" }}</small>
+                                    {% else %}
+                                        {% now "Y-m-d" as today %}
+                                        {% if task.due_date|date:"Y-m-d" == today %}
+                                            <small class="fw-bold" style="color: #ff8c00;">Due: {{ task.due_date|date:"M d, Y" }}</small>
+                                        {% else %}
+                                            <small class="text-muted">Due: {{ task.due_date|date:"M d, Y" }}</small>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'projects:project_detail' task.project.pk %}">
+                                    {{ task.project.name }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if task.status == 'done' or task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'pending' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ task.created_by.username }}</td>
+                            <td>{{ task.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'tasks:task_edit' task.pk %}"
+                                       class="btn btn-outline-primary"
+                                       title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'projects:project_detail' task.project.pk %}"
+                                       class="btn btn-outline-info"
+                                       title="View Project">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted mb-3">
+                    {% if status_filter == 'all' %}
+                        No tasks assigned to you yet.
+                    {% elif status_filter == 'pending' %}
+                        No pending tasks.
+                    {% elif status_filter == 'not_started' %}
+                        No tasks that haven't been started.
+                    {% elif status_filter == 'completed' %}
+                        No completed tasks yet.
+                    {% endif %}
+                </p>
+                <a href="{% url 'projects:project_list' %}" class="btn btn-primary">
+                    View Projects
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

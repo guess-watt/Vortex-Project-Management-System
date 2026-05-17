@@ -1,0 +1,138 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Toast Demo - Vortex{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">🎉 Toast Notification System Demo</h2>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Test Toast Notifications</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Click the buttons below to see different toast notification types:</p>
+                
+                <div class="d-grid gap-2 d-md-flex">
+                    <button onclick="window.ToastManager.success('Operation completed successfully!')" 
+                            class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Success Toast
+                    </button>
+                    
+                    <button onclick="window.ToastManager.error('An error occurred!')" 
+                            class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Error Toast
+                    </button>
+                    
+                    <button onclick="window.ToastManager.warning('Please review your changes')" 
+                            class="btn btn-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Warning Toast
+                    </button>
+                    
+                    <button onclick="window.ToastManager.info('New update available')" 
+                            class="btn btn-info">
+                        <i class="bi bi-info-circle"></i> Info Toast
+                    </button>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h6>Advanced Features:</h6>
+                <div class="d-grid gap-2 d-md-flex mt-3">
+                    <button onclick="testMultipleToasts()" class="btn btn-outline-primary">
+                        <i class="bi bi-stack"></i> Multiple Toasts
+                    </button>
+                    
+                    <button onclick="testLongDuration()" class="btn btn-outline-secondary">
+                        <i class="bi bi-clock"></i> Long Duration (10s)
+                    </button>
+                    
+                    <button onclick="testWithAction()" class="btn btn-outline-success">
+                        <i class="bi bi-hand-index"></i> Toast with Action
+                    </button>
+                    
+                    <button onclick="window.ToastManager.dismissAll()" class="btn btn-outline-danger">
+                        <i class="bi bi-x-lg"></i> Dismiss All
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">How It Works</h5>
+            </div>
+            <div class="card-body">
+                <h6>Automatic Django Messages:</h6>
+                <p>All Django messages (from views using <code>messages.success()</code>, <code>messages.error()</code>, etc.) 
+                   will automatically appear as toast notifications when the page loads.</p>
+                
+                <h6 class="mt-3">Manual JavaScript Usage:</h6>
+                <pre class="bg-light p-3 rounded"><code>// Basic usage
+window.ToastManager.success('Task saved!');
+window.ToastManager.error('Failed to delete');
+window.ToastManager.warning('Please review');
+window.ToastManager.info('Update available');
+
+// With custom duration (milliseconds)
+window.ToastManager.show('Message', 'success', 5000);
+
+// With action button
+window.ToastManager.show('File uploaded', 'success', 4000, {
+    label: 'View',
+    onClick: () => window.location.href = '/files/'
+});</code></pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Features</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>✅ 4 toast types: success (green), error (red), warning (yellow), info (blue)</li>
+                    <li>✅ Icons: ✅ ❌ ⚠️ ℹ️</li>
+                    <li>✅ Slide-in animation from top-right</li>
+                    <li>✅ Progress bar countdown</li>
+                    <li>✅ Auto-dismiss after configurable duration</li>
+                    <li>✅ Stack multiple toasts with 8px gap</li>
+                    <li>✅ Mobile responsive (full width on screens < 576px)</li>
+                    <li>✅ Optional action buttons</li>
+                    <li>✅ Close button on each toast</li>
+                    <li>✅ Dark mode support</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function testMultipleToasts() {
+    window.ToastManager.success('First toast notification');
+    setTimeout(() => window.ToastManager.info('Second toast notification'), 500);
+    setTimeout(() => window.ToastManager.warning('Third toast notification'), 1000);
+    setTimeout(() => window.ToastManager.error('Fourth toast notification'), 1500);
+}
+
+function testLongDuration() {
+    window.ToastManager.show('This toast will stay for 10 seconds', 'info', 10000);
+}
+
+function testWithAction() {
+    window.ToastManager.show('Task completed successfully!', 'success', 5000, {
+        label: 'View Details',
+        onClick: () => {
+            alert('Action button clicked! In a real app, this would navigate to a details page.');
+        }
+    });
+}
+</script>
+{% endblock %}

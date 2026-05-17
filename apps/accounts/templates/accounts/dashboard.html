@@ -1,0 +1,253 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard - Vortex{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Welcome, {{ user.username }}!</h1>
+        
+        <!-- Deadline Alerts Section -->
+        {% if overdue_count > 0 %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="overdue-alert">
+            <h5 class="alert-heading">🚨 {{ overdue_count }} task{{ overdue_count|pluralize }} {{ overdue_count|pluralize:"is,are" }} overdue — take action now</h5>
+            <hr>
+            <ul class="mb-0">
+                {% for task in overdue_tasks %}
+                <li>
+                    <strong>{{ task.title }}</strong>
+                    - <a href="{% url 'projects:project_detail' task.project.pk %}" class="alert-link">{{ task.project.name }}</a>
+                    - <span class="badge bg-dark">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                    <a href="{% url 'tasks:task_edit' task.pk %}" class="alert-link ms-2">Edit</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="sessionStorage.setItem('overdue-alert-dismissed', 'true')"></button>
+        </div>
+        {% endif %}
+        
+        {% if due_today_count > 0 %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" id="due-today-alert">
+            <h5 class="alert-heading">⚠️ {{ due_today_count }} task{{ due_today_count|pluralize }} {{ due_today_count|pluralize:"is,are" }} due today</h5>
+            <hr>
+            <ul class="mb-0">
+                {% for task in due_today_tasks %}
+                <li>
+                    <strong>{{ task.title }}</strong>
+                    - <a href="{% url 'projects:project_detail' task.project.pk %}" class="alert-link">{{ task.project.name }}</a>
+                    - <span class="badge bg-secondary">{{ task.get_priority_display }}</span>
+                    <a href="{% url 'tasks:task_edit' task.pk %}" class="alert-link ms-2">Edit</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="sessionStorage.setItem('due-today-alert-dismissed', 'true')"></button>
+        </div>
+        {% endif %}
+        
+        {% if due_soon_count > 0 %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert" id="due-soon-alert" style="background-color: #fff3cd; border-color: #ffc107; color: #856404;">
+            <h5 class="alert-heading">📅 {{ due_soon_count }} task{{ due_soon_count|pluralize }} due tomorrow — plan ahead</h5>
+            <hr>
+            <ul class="mb-0">
+                {% for task in due_soon_tasks %}
+                <li>
+                    <strong>{{ task.title }}</strong>
+                    - <a href="{% url 'projects:project_detail' task.project.pk %}" class="alert-link">{{ task.project.name }}</a>
+                    - <span class="badge bg-secondary">{{ task.get_priority_display }}</span>
+                    <a href="{% url 'tasks:task_edit' task.pk %}" class="alert-link ms-2">Edit</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="sessionStorage.setItem('due-soon-alert-dismissed', 'true')"></button>
+        </div>
+        {% endif %}
+        
+        <!-- Project Health Analytics -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <a href="{% url 'projects:project_list' %}?sort=health" class="text-decoration-none">
+                    <div class="card bg-success text-white h-100 hover-shadow">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title mb-1">
+                                        <i class="bi bi-check-circle-fill"></i> Healthy Projects
+                                    </h5>
+                                    <h2 class="mb-0 display-4">{{ healthy_projects }}</h2>
+                                    <small>Score 70+ • Click to view</small>
+                                </div>
+                                <i class="bi bi-heart-pulse-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <a href="{% url 'projects:project_list' %}?sort=health" class="text-decoration-none">
+                    <div class="card bg-danger text-white h-100 hover-shadow">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title mb-1">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> At Risk Projects
+                                    </h5>
+                                    <h2 class="mb-0 display-4">{{ at_risk_projects }}</h2>
+                                    <small>Score below 40 • Click to view</small>
+                                </div>
+                                <i class="bi bi-shield-exclamation" style="font-size: 3rem; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Profile</h5>
+                        <p class="card-text">Email: {{ user.email }}</p>
+                        <p class="card-text">Role: {{ user.get_role_display }}</p>
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-primary">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Projects</h5>
+                        <p class="card-text">Manage your hackathon projects</p>
+                        <a href="{% url 'projects:project_list' %}" class="btn btn-secondary">View Projects</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tasks</h5>
+                        <p class="card-text">Track your tasks and progress</p>
+                        <a href="{% url 'tasks:task_list' %}" class="btn btn-secondary">View Tasks</a>
+                        <span class="badge bg-warning ms-2">{{ pending_tasks }} Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Quick Stats</h5>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h3>{{ total_projects }}</h3>
+                        <p>Projects</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ total_tasks }}</h3>
+                        <p>Total Tasks</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ completed_tasks }}</h3>
+                        <p>Completed</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ pending_tasks }}</h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+            </div>
+        
+        {% if recent_pending_tasks %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Your Pending Tasks</h5>
+            </div>
+            <div class="card-body">
+                {% csrf_token %}
+                <div class="list-group list-group-flush">
+                    {% for task in recent_pending_tasks %}
+                    <div class="list-group-item task-card">
+                        <div class="d-flex w-100 justify-content-between align-items-start">
+                            <div class="d-flex align-items-start">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input task-status-checkbox"
+                                           type="checkbox"
+                                           data-task-id="{{ task.id }}"
+                                           {% if task.status == 'done' or task.status == 'completed' %}checked{% endif %}
+                                           id="task-{{ task.id }}">
+                                    <label class="form-check-label" for="task-{{ task.id }}"></label>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ task.title }}</h6>
+                                    <p class="mb-1 text-muted small">{{ task.description|truncatewords:20 }}</p>
+                                    <small class="text-muted">
+                                        Project: <a href="{% url 'projects:project_detail' task.project.pk %}">{{ task.project.name }}</a>
+                                        | Created by: {{ task.created_by.username }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge
+                                    {% if task.status == 'done' or task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'pending' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ task.created_at|date:"M d" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        </div>
+        
+        {% if projects %}
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Projects</h5>
+                <a href="{% url 'projects:project_list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for project in projects %}
+                    <a href="{% url 'projects:project_detail' project.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ project.name }}</h6>
+                            <small class="text-muted">{{ project.created_at|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ project.description|truncatewords:15 }}</p>
+                        <small class="text-muted">Owner: {{ project.owner.username }} | Members: {{ project.members.count }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Check sessionStorage and hide dismissed alerts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (sessionStorage.getItem('overdue-alert-dismissed') === 'true') {
+        const alert = document.getElementById('overdue-alert');
+        if (alert) alert.style.display = 'none';
+    }
+    if (sessionStorage.getItem('due-today-alert-dismissed') === 'true') {
+        const alert = document.getElementById('due-today-alert');
+        if (alert) alert.style.display = 'none';
+    }
+    if (sessionStorage.getItem('due-soon-alert-dismissed') === 'true') {
+        const alert = document.getElementById('due-soon-alert');
+        if (alert) alert.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% load static %}
+
+<div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 project-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">{{ project.name }}</h5>
+                
+                <!-- Health Score Circle -->
+                <div class="health-score-container"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="top"
+                     data-bs-html="true"
+                     title="<strong>Health Score Breakdown:</strong><br>
+                            Tasks Done: {{ health.breakdown.tasks_done }}<br>
+                            No Overdue: {{ health.breakdown.no_overdue }}<br>
+                            All Assigned: {{ health.breakdown.all_assigned }}<br>
+                            Overdue Penalty: {{ health.breakdown.overdue_penalty }}<br>
+                            Recent Activity: {{ health.breakdown.recent_activity }}">
+                    <svg class="health-circle" width="80" height="80" viewBox="0 0 80 80">
+                        <!-- Background circle -->
+                        <circle cx="40" cy="40" r="32"
+                                fill="none"
+                                stroke="#e9ecef"
+                                stroke-width="6"/>
+                        
+                        <!-- Progress circle (circumference = 2 * π * r = 2 * 3.14159 * 32 ≈ 201) -->
+                        <circle cx="40" cy="40" r="32"
+                                fill="none"
+                                stroke="{% if health.color == 'green' %}#28a745{% elif health.color == 'yellow' %}#ffc107{% else %}#dc3545{% endif %}"
+                                stroke-width="6"
+                                stroke-linecap="round"
+                                stroke-dasharray="201"
+                                stroke-dashoffset="201"
+                                transform="rotate(-90 40 40)"
+                                class="health-progress"
+                                data-score="{{ health.score }}"/>
+                        
+                        <!-- Score text -->
+                        <text x="40" y="38" 
+                              text-anchor="middle" 
+                              font-size="18" 
+                              font-weight="bold"
+                              fill="{% if health.color == 'green' %}#28a745{% elif health.color == 'yellow' %}#ffc107{% else %}#dc3545{% endif %}">
+                            {{ health.score }}
+                        </text>
+                        <text x="40" y="52" 
+                              text-anchor="middle" 
+                              font-size="10" 
+                              fill="#6c757d">
+                            {{ health.label }}
+                        </text>
+                    </svg>
+                </div>
+            </div>
+            
+            <p class="card-text text-muted">{{ project.description|truncatewords:20 }}</p>
+            
+            <!-- Project Stats -->
+            <div class="project-stats mb-3">
+                <small class="text-muted d-block">
+                    <i class="bi bi-person"></i> Owner: {{ project.owner.username }}
+                </small>
+                <small class="text-muted d-block">
+                    <i class="bi bi-people"></i> Members: {{ project.members.count }}
+                </small>
+                <small class="text-muted d-block">
+                    <i class="bi bi-list-task"></i> Tasks: {{ health.total_tasks }} 
+                    ({{ health.done_tasks }} done{% if health.overdue_tasks %}, {{ health.overdue_tasks }} overdue{% endif %})
+                </small>
+                <small class="text-muted d-block">
+                    <i class="bi bi-calendar"></i> Created: {{ project.created_at|date:"M d, Y" }}
+                </small>
+            </div>
+            
+            <!-- Health Badge -->
+            <div class="mb-2">
+                <span class="badge bg-{% if health.color == 'green' %}success{% elif health.color == 'yellow' %}warning{% else %}danger{% endif %}">
+                    {{ health.emoji }} {{ health.label }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-transparent">
+            <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> View Details
+            </a>
+            <a href="{% url 'projects:project_kanban' project.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-kanban"></i> Board
+            </a>
+        </div>
+    </div>
+</div>

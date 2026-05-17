@@ -1,0 +1,661 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Team - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-people"></i> Team - {{ project.name }}</h2>
+            <div>
+                {% if can_manage %}
+                <button type="button" class="btn btn-warning me-2" id="aiAssignTasksBtn">
+                    <i class="bi bi-lightning-charge"></i> AI Assign Tasks
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteMemberModal">
+                    <i class="bi bi-person-plus"></i> Invite Member
+                </button>
+                {% endif %}
+                <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Project
+                </a>
+            </div>
+        </div>
+
+        <!-- Project Owner Card -->
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-star-fill"></i> Project Owner</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-1">{{ project.owner.username }}</h5>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-envelope"></i> {{ project.owner.email }}
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="badge bg-primary fs-6">Owner</span>
+                        <p class="text-muted mb-0 mt-2">
+                            <small>Created: {{ project.created_at|date:"M d, Y" }}</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people-fill"></i> Team Members ({{ team_members.count }})</h5>
+            </div>
+            <div class="card-body">
+                {% if team_members %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Email</th>
+                                <th class="text-center">Role</th>
+                                <th class="text-center">Joined</th>
+                                <th class="text-center">Tasks</th>
+                                <th class="text-center">Invited By</th>
+                                {% if can_manage %}
+                                <th class="text-center">Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in team_members %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-primary text-white me-2">
+                                            {{ member.user.username|slice:":1"|upper }}
+                                        </div>
+                                        <strong>{{ member.user.username }}</strong>
+                                    </div>
+                                </td>
+                                <td>{{ member.user.email }}</td>
+                                <td class="text-center">
+                                    {% if is_owner and can_manage %}
+                                    <form method="post" action="{% url 'projects:update_member_role' project.pk member.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <select name="role" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; display: inline-block;">
+                                            <option value="admin" {% if member.role == 'admin' %}selected{% endif %}>Admin</option>
+                                            <option value="member" {% if member.role == 'member' %}selected{% endif %}>Member</option>
+                                        </select>
+                                    </form>
+                                    {% else %}
+                                    <span class="badge {% if member.role == 'admin' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ member.get_role_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <small>{{ member.joined_at|date:"M d, Y" }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ member.get_assigned_tasks_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if member.invited_by %}
+                                    <small class="text-muted">{{ member.invited_by.username }}</small>
+                                    {% else %}
+                                    <small class="text-muted">-</small>
+                                    {% endif %}
+                                </td>
+                                {% if can_manage %}
+                                <td class="text-center">
+                                    <form method="post" action="{% url 'projects:remove_member' project.pk member.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to remove {{ member.user.username }} from this project?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove member">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">No team members yet.</p>
+                    {% if can_manage %}
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteMemberModal">
+                        <i class="bi bi-person-plus"></i> Invite Your First Member
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Team Statistics -->
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card border-primary h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">{{ team_members.count|add:1 }}</h3>
+                        <p class="text-muted mb-0">Total Members</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-warning h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-check text-warning" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">{{ team_members|length|add:1 }}</h3>
+                        <p class="text-muted mb-0">Active Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-info h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-list-task text-info" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">{{ project.tasks.count }}</h3>
+                        <p class="text-muted mb-0">Total Tasks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div class="modal fade" id="inviteMemberModal" tabindex="-1" aria-labelledby="inviteMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="inviteMemberModalLabel">
+                    <i class="bi bi-person-plus"></i> Invite Team Member
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'projects:invite_member' project.pk %}" id="inviteForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user-search-input" class="form-label">Search User</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="user-search-input" 
+                               placeholder="Type email or username..." 
+                               autocomplete="off">
+                        <input type="hidden" id="selected-user-id" name="user_id">
+                        <input type="hidden" id="user-search-value" name="user_search">
+                        <div id="search-results" class="list-group mt-2" style="display: none;"></div>
+                        <div id="selected-user-display" class="alert alert-info mt-2" style="display: none;">
+                            <strong>Selected:</strong> <span id="selected-user-name"></span>
+                            <button type="button" class="btn-close float-end" onclick="clearSelection()"></button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role-select" class="form-label">Role</label>
+                        <select class="form-select" id="role-select" name="role" required>
+                            <option value="member" selected>Member - Can view and update assigned tasks</option>
+                            <option value="admin">Admin - Can manage tasks and invite members</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Note:</strong> The invited user will be able to access this project immediately.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="invite-submit-btn" disabled>
+                        <i class="bi bi-send"></i> Send Invite
+                    </button>
+                </div>
+
+<!-- AI Workload Balancer Modal -->
+<div class="modal fade" id="workloadBalancerModal" tabindex="-1" aria-labelledby="workloadBalancerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="workloadBalancerModalLabel">
+                    <i class="bi bi-lightning-charge"></i> AI Workload Balancer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="workload-loading" class="text-center py-5">
+                    <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Analyzing team workload and generating suggestions...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="workload-error" class="alert alert-danger" style="display: none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Error:</strong> <span id="error-message"></span>
+                </div>
+
+                <!-- No Tasks State -->
+                <div id="workload-no-tasks" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">All Tasks Assigned!</h5>
+                    <p class="text-muted">There are no unassigned tasks in this project.</p>
+                </div>
+
+                <!-- Suggestions Table -->
+                <div id="workload-suggestions" style="display: none;">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>AI Analysis Complete:</strong> Review the suggestions below and apply assignments individually or all at once.
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Task</th>
+                                    <th style="width: 20%;">Suggested Member</th>
+                                    <th style="width: 25%;">Reason</th>
+                                    <th style="width: 15%;" class="text-center">Confidence</th>
+                                    <th style="width: 10%;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suggestions-table-body">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="applyAllBtn" style="display: none;">
+                    <i class="bi bi-check-all"></i> Apply All Assignments
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#search-results .list-group-item {
+    cursor: pointer;
+}
+
+#search-results .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+
+<script>
+let searchTimeout;
+const searchInput = document.getElementById('user-search-input');
+const searchResults = document.getElementById('search-results');
+const selectedUserId = document.getElementById('selected-user-id');
+const selectedUserDisplay = document.getElementById('selected-user-display');
+const selectedUserName = document.getElementById('selected-user-name');
+const inviteSubmitBtn = document.getElementById('invite-submit-btn');
+const userSearchValue = document.getElementById('user-search-value');
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+        searchResults.style.display = 'none';
+        searchResults.innerHTML = '';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        searchUsers(query);
+    }, 300);
+});
+
+function searchUsers(query) {
+    const projectId = '{{ project.pk }}';
+    
+    fetch(`/api/projects/search-users/?q=${encodeURIComponent(query)}&project_id=${projectId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.users && data.users.length > 0) {
+                displaySearchResults(data.users);
+            } else {
+                searchResults.innerHTML = '<div class="list-group-item text-muted">No users found</div>';
+                searchResults.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching users:', error);
+            searchResults.innerHTML = '<div class="list-group-item text-danger">Error searching users</div>';
+            searchResults.style.display = 'block';
+        });
+}
+
+function displaySearchResults(users) {
+    searchResults.innerHTML = '';
+    
+    users.forEach(user => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action';
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${user.username}</strong><br>
+                    <small class="text-muted">${user.email}</small>
+                </div>
+                <i class="bi bi-plus-circle text-success"></i>
+            </div>
+        `;
+        
+        item.onclick = (e) => {
+            e.preventDefault();
+            selectUser(user);
+        };
+        
+        searchResults.appendChild(item);
+    });
+    
+    searchResults.style.display = 'block';
+}
+
+function selectUser(user) {
+    selectedUserId.value = user.id;
+    userSearchValue.value = user.email;
+    selectedUserName.textContent = `${user.username} (${user.email})`;
+    selectedUserDisplay.style.display = 'block';
+    searchResults.style.display = 'none';
+    searchInput.value = '';
+    inviteSubmitBtn.disabled = false;
+}
+
+function clearSelection() {
+    selectedUserId.value = '';
+    userSearchValue.value = '';
+    selectedUserDisplay.style.display = 'none';
+    inviteSubmitBtn.disabled = true;
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(event) {
+    if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+        searchResults.style.display = 'none';
+    }
+});
+
+// Reset form when modal is closed
+document.getElementById('inviteMemberModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('inviteForm').reset();
+    clearSelection();
+    searchResults.style.display = 'none';
+    searchResults.innerHTML = '';
+
+// ===== AI Workload Balancer =====
+const aiAssignTasksBtn = document.getElementById('aiAssignTasksBtn');
+const workloadModal = new bootstrap.Modal(document.getElementById('workloadBalancerModal'));
+const workloadLoading = document.getElementById('workload-loading');
+const workloadError = document.getElementById('workload-error');
+const workloadNoTasks = document.getElementById('workload-no-tasks');
+const workloadSuggestions = document.getElementById('workload-suggestions');
+const suggestionsTableBody = document.getElementById('suggestions-table-body');
+const applyAllBtn = document.getElementById('applyAllBtn');
+const errorMessage = document.getElementById('error-message');
+
+let currentSuggestions = [];
+
+// Open modal and fetch suggestions
+if (aiAssignTasksBtn) {
+    aiAssignTasksBtn.addEventListener('click', function() {
+        // Reset modal state
+        workloadLoading.style.display = 'block';
+        workloadError.style.display = 'none';
+        workloadNoTasks.style.display = 'none';
+        workloadSuggestions.style.display = 'none';
+        applyAllBtn.style.display = 'none';
+        suggestionsTableBody.innerHTML = '';
+        currentSuggestions = [];
+        
+        // Open modal
+        workloadModal.show();
+        
+        // Fetch workload suggestions
+        fetchWorkloadSuggestions();
+    });
+}
+
+function fetchWorkloadSuggestions() {
+    const projectId = '{{ project.pk }}';
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/api/projects/${projectId}/workload-balance/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        workloadLoading.style.display = 'none';
+        
+        if (data.success) {
+            if (data.suggestions && data.suggestions.length > 0) {
+                currentSuggestions = data.suggestions;
+                displaySuggestions(data.suggestions);
+                workloadSuggestions.style.display = 'block';
+                applyAllBtn.style.display = 'inline-block';
+            } else {
+                workloadNoTasks.style.display = 'block';
+            }
+        } else {
+            showError(data.error || 'Failed to analyze workload');
+        }
+    })
+    .catch(error => {
+        workloadLoading.style.display = 'none';
+        showError('Network error: ' + error.message);
+    });
+}
+
+function displaySuggestions(suggestions) {
+    suggestionsTableBody.innerHTML = '';
+    
+    suggestions.forEach((suggestion, index) => {
+        const row = createSuggestionRow(suggestion, index);
+        suggestionsTableBody.appendChild(row);
+    });
+}
+
+function createSuggestionRow(suggestion, index) {
+    const row = document.createElement('tr');
+    row.id = `suggestion-row-${index}`;
+    row.dataset.taskId = suggestion.task_id;
+    row.dataset.userId = suggestion.suggested_user_id;
+    
+    // Confidence color
+    let confidenceClass = 'bg-success';
+    if (suggestion.confidence_percent < 60) {
+        confidenceClass = 'bg-danger';
+    } else if (suggestion.confidence_percent < 80) {
+        confidenceClass = 'bg-warning';
+    }
+    
+    row.innerHTML = `
+        <td>
+            <strong>${escapeHtml(suggestion.task_title)}</strong>
+        </td>
+        <td>
+            <span class="badge bg-primary">${escapeHtml(suggestion.suggested_username)}</span>
+        </td>
+        <td>
+            <small class="text-muted">${escapeHtml(suggestion.reason)}</small>
+        </td>
+        <td class="text-center">
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar ${confidenceClass}" 
+                     role="progressbar" 
+                     style="width: ${suggestion.confidence_percent}%"
+                     aria-valuenow="${suggestion.confidence_percent}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    ${suggestion.confidence_percent}%
+                </div>
+            </div>
+        </td>
+        <td class="text-center">
+            <button class="btn btn-sm btn-success apply-btn" 
+                    onclick="applySingleAssignment(${index})"
+                    data-index="${index}">
+                <i class="bi bi-check-circle"></i> Apply
+            </button>
+        </td>
+    `;
+    
+    return row;
+}
+
+function applySingleAssignment(index) {
+    const suggestion = currentSuggestions[index];
+    const row = document.getElementById(`suggestion-row-${index}`);
+    const applyBtn = row.querySelector('.apply-btn');
+    
+    // Disable button and show loading
+    applyBtn.disabled = true;
+    applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    
+    assignTask(suggestion.task_id, suggestion.suggested_user_id)
+        .then(success => {
+            if (success) {
+                // Mark as applied
+                row.classList.add('table-success');
+                applyBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Applied';
+                applyBtn.classList.remove('btn-success');
+                applyBtn.classList.add('btn-outline-success');
+                
+                // Remove from current suggestions
+                currentSuggestions.splice(index, 1);
+                
+                // Check if all applied
+                if (currentSuggestions.length === 0) {
+                    setTimeout(() => {
+                        workloadModal.hide();
+                        location.reload();
+                    }, 1500);
+                }
+            } else {
+                applyBtn.disabled = false;
+                applyBtn.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+                applyBtn.classList.add('btn-danger');
+            }
+        });
+}
+
+function assignTask(taskId, userId) {
+    const projectId = '{{ project.pk }}';
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const formData = new FormData();
+    formData.append('task_id', taskId);
+    formData.append('user_id', userId);
+    
+    return fetch(`/api/projects/${projectId}/assign-task/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            return true;
+        } else {
+            console.error('Assignment failed:', data.error);
+            return false;
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        return false;
+    });
+}
+
+// Apply all assignments
+if (applyAllBtn) {
+    applyAllBtn.addEventListener('click', function() {
+        if (currentSuggestions.length === 0) return;
+        
+        applyAllBtn.disabled = true;
+        applyAllBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Applying...';
+        
+        let completed = 0;
+        const total = currentSuggestions.length;
+        
+        // Apply each assignment sequentially
+        currentSuggestions.forEach((suggestion, index) => {
+            setTimeout(() => {
+                applySingleAssignment(index);
+                completed++;
+                
+                if (completed === total) {
+                    setTimeout(() => {
+                        workloadModal.hide();
+                        location.reload();
+                    }, 2000);
+                }
+            }, index * 500); // Stagger requests by 500ms
+        });
+    });
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    workloadError.style.display = 'block';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Reset modal when closed
+document.getElementById('workloadBalancerModal').addEventListener('hidden.bs.modal', function () {
+    workloadLoading.style.display = 'block';
+    workloadError.style.display = 'none';
+    workloadNoTasks.style.display = 'none';
+    workloadSuggestions.style.display = 'none';
+    applyAllBtn.style.display = 'none';
+    suggestionsTableBody.innerHTML = '';
+    currentSuggestions = [];
+});
+});
+</script>
+{% endblock %}

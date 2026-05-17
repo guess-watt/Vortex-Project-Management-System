@@ -1,0 +1,117 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Generate Tasks with AI - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-magic"></i> Generate Tasks with AI</h2>
+            <div>
+                <a href="{% url 'projects:project_kanban' project.pk %}" class="btn btn-info">
+                    <i class="bi bi-kanban"></i> Kanban Board
+                </a>
+                <a href="{% url 'projects:project_burndown' project.pk %}" class="btn btn-primary">
+                    <i class="bi bi-graph-down"></i> Burndown Chart
+                </a>
+                <a href="{% url 'projects:project_detail' project.pk %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Project
+                </a>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Project: {{ project.name }}</h5>
+                <p class="text-muted">{{ project.description|truncatewords:30 }}</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-robot"></i> AI Task Generator</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>How it works:</strong> Describe your project or feature in detail, and our AI will generate a structured list of tasks to help you get started quickly.
+                </div>
+
+                <form method="post" id="generateForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.project_description.id_for_label }}" class="form-label">
+                            {{ form.project_description.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.project_description }}
+                        {% if form.project_description.help_text %}
+                            <div class="form-text">{{ form.project_description.help_text }}</div>
+                        {% endif %}
+                        {% if form.project_description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.project_description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.num_tasks.id_for_label }}" class="form-label">
+                            {{ form.num_tasks.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.num_tasks }}
+                        {% if form.num_tasks.help_text %}
+                            <div class="form-text">{{ form.num_tasks.help_text }}</div>
+                        {% endif %}
+                        {% if form.num_tasks.errors %}
+                            <div class="text-danger">
+                                {% for error in form.num_tasks.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                            <i class="bi bi-magic"></i> Generate Tasks
+                        </button>
+                    </div>
+                </form>
+
+                <div id="loadingState" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">AI is generating your tasks... This may take a few seconds.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-lightbulb"></i> Tips for Better Results</h6>
+                <ul class="mb-0">
+                    <li>Be specific about your project goals and requirements</li>
+                    <li>Mention key features or functionalities you need</li>
+                    <li>Include technical details if relevant (e.g., technologies, platforms)</li>
+                    <li>Describe the target audience or use case</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('generateForm').addEventListener('submit', function(e) {
+    // Show loading state
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('loadingState').style.display = 'block';
+    document.querySelector('.card-body form').style.display = 'none';
+});
+</script>
+{% endblock %}

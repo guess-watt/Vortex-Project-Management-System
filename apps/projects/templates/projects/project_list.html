@@ -1,0 +1,108 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Projects - Vortex{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-folder"></i> My Projects</h2>
+    <div>
+        <a href="{% url 'projects:project_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Project
+        </a>
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+            <i class="bi bi-house"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Health Analytics Summary -->
+{% if projects_with_health %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-check-circle"></i> Healthy Projects
+                </h5>
+                <h2 class="mb-0">{{ healthy_count }}</h2>
+                <small>Score 70+</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-exclamation-triangle"></i> At Risk Projects
+                </h5>
+                <h2 class="mb-0">{{ at_risk_count }}</h2>
+                <small>Score below 40</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Controls -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <span class="text-muted">Sort by:</span>
+        <div class="btn-group ms-2" role="group">
+            <a href="?sort=health" class="btn btn-sm btn-{% if sort_by == 'health' %}primary{% else %}outline-primary{% endif %}">
+                <i class="bi bi-heart-pulse"></i> Health
+            </a>
+            <a href="?sort=name" class="btn btn-sm btn-{% if sort_by == 'name' %}primary{% else %}outline-primary{% endif %}">
+                <i class="bi bi-sort-alpha-down"></i> Name
+            </a>
+            <a href="?sort=date" class="btn btn-sm btn-{% if sort_by == 'date' %}primary{% else %}outline-primary{% endif %}">
+                <i class="bi bi-calendar"></i> Date
+            </a>
+        </div>
+    </div>
+    <small class="text-muted">{{ projects_with_health|length }} project{{ projects_with_health|length|pluralize }}</small>
+</div>
+
+<!-- Project Cards -->
+<div class="row">
+    {% for item in projects_with_health %}
+        {% with project=item.project health=item.health %}
+            {% include 'projects/project_card.html' %}
+        {% endwith %}
+    {% endfor %}
+</div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-folder-x text-muted" style="font-size: 4rem;"></i>
+        <h4 class="mt-3 text-muted">No Projects Yet</h4>
+        <p class="text-muted">Get started by creating your first project</p>
+        <a href="{% url 'projects:project_create' %}" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-circle"></i> Create Your First Project
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Bootstrap tooltips and animate health circles
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Animate health score circles
+    const circles = document.querySelectorAll('.health-progress');
+    circles.forEach(circle => {
+        const score = parseInt(circle.getAttribute('data-score'));
+        const circumference = 201; // 2 * π * 32
+        const offset = circumference - (score / 100) * circumference;
+        
+        // Set the final stroke-dashoffset
+        setTimeout(() => {
+            circle.style.strokeDashoffset = offset;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}
